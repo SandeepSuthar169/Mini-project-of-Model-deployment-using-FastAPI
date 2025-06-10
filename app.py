@@ -14,7 +14,7 @@ app = FastAPI(title="Heart Disease Prediction API")
 
 
 class HeartData(BaseModel):
-    age: Annotated[int, Field(..., gt=0, lt=120, description='age of the user')]
+    Age: Annotated[int, Field(..., gt=0, lt=120, description='age of the user')]
     Sex: Annotated[object, Field(..., description='gender of the user')]
     ChestPainType: Annotated[object, Field(..., description='chest pain of the userof different level pain')]
     RestingBP: Annotated[int, Field(..., description='pressure of blood of user in mm Hg')]
