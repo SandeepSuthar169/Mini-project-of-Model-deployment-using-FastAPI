@@ -1,50 +1,39 @@
 from fastapi import FastAPI
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field
+from typing import Literal
 from fastapi.responses import JSONResponse
-from typing import Literal, Annotated
-import pickle
 import pandas as pd
-import numpy as np
+import pickle
 
-
+# Load model
 with open("notebook/model.pkl", "rb") as file:
     model = pickle.load(file)
 
 app = FastAPI(title="Heart Disease Prediction API")
 
-
+# Define input data schema
 class HeartData(BaseModel):
-    Age: Annotated[int, Field(..., gt=0, lt=120, description='age of the user')]
-    Sex: Annotated[object, Field(..., description='gender of the user')]
-    ChestPainType: Annotated[object, Field(..., description='chest pain of the userof different level pain')]
-    RestingBP: Annotated[int, Field(..., description='pressure of blood of user in mm Hg')]
-    Cholesterol: Annotated[int, Field(..., description='Total amound of cholesterol in person blood (HDL), (LDL)')]
-    FastingBS: Annotated[int, Field(..., description= '0 or 1')]
-    RestingECG: Annotated[object, Field(..., description='Resting Electrocardiogram Results, normal, ST, LVH')]
-    MaxHR: Annotated[int, Field(...,description= 'Maximum Heart Rate')]
-    ExerciseAngina: Annotated[object, Field(..., description='the patient experienced angina (chest pain) during exercise')]
-    Oldpeak: Annotated[float, Field(..., description='Millimeters (mm) of ST segment depression')]
-    ST_Slope: Annotated[object, Field(..., description='Slope of the ST Segment')]
-
+    Age: int = Field(..., gt=0, lt=120, description="Age of the user")
+    Sex: Literal["M", "F"]
+    ChestPainType: Literal[1, 2, 3, 4]  # Encoded already
+    RestingBP: int
+    Cholesterol: int
+    FastingBS: Literal[0, 1]
+    RestingECG: Literal[1, 2, 3]  # Encoded already
+    MaxHR: int
+    ExerciseAngina: Literal["Y", "N"]
+    Oldpeak: float
+    ST_Slope: Literal[1, 2, 3]  # Encoded already
 
 @app.post("/predict")
 def predict(data: HeartData):
-    
-    input_data =pd.DataFrame([ {
-        "Sex": [data.Sex],
-        "ChestPainType": [data.ChestPainType],
-        "RestingBP": [data.RestingBP],
-        "Cholesterol": [data.Cholesterol],
-        "FastingBS": [data.FastingBS],
-        "RestingECG": [data.RestingECG],
-        "MaxHR": [data.MaxHR],
-        "ExerciseAngina": [data.ExerciseAngina],
-        "Oldpeak": [data.Oldpeak],
-        "ST_Slope": [data.ST_Slope],
-        "Age": [data.Age],
-    }])
+    # Convert input to DataFrame
+    input_df = pd.DataFrame([data.dict()])
 
- 
-    # Predict
-    prediction = model.predict(input_data)[0]
-    return JSONResponse(status_code=200, content={'predicted_category': prediction})
+    # Make prediction
+    try:
+        prediction = model.predict(input_df)[0]
+        return JSONResponse(status_code=200, content={"predicted_category": int(prediction)})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
