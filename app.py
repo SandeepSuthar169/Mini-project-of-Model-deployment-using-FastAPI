@@ -30,7 +30,7 @@ class HeartData(BaseModel):
 @app.post("/predict")
 def predict(data: HeartData):
     
-    input_data = {
+    input_data =pd.DataFrame([ {
         "Sex": [data.Sex],
         "ChestPainType": [data.ChestPainType],
         "RestingBP": [data.RestingBP],
@@ -42,11 +42,9 @@ def predict(data: HeartData):
         "Oldpeak": [data.Oldpeak],
         "ST_Slope": [data.ST_Slope],
         "Age": [data.Age],
-    }
+    }])
 
-    import pandas as pd
-    df = pd.DataFrame(input_data)
-
+ 
     # Predict
-    prediction = model.predict(df)[0]
-    return {"prediction": int(prediction)}
+    prediction = model.predict(input_data)[0]
+    return JSONResponse(status_code=200, content={'predicted_category': prediction})
